@@ -34,10 +34,10 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 
-python build_kb.py --dry-run   # 모델 다운로드 없이 청크 확인
-python build_kb.py             # 인덱싱 (첫 실행은 bge-m3 약 2GB 다운로드)
-python test_retrieval.py       # 검색 테스트
-python test_retrieval.py -q "무인 매장에서 물건을 훔치면?"
+.venv\Scripts\python build_kb.py --dry-run   # 모델 다운로드 없이 청크 확인
+.venv\Scripts\python build_kb.py             # 인덱싱 (첫 실행은 bge-m3 약 2GB 다운로드)
+.venv\Scripts\python test_retrieval.py       # 검색 테스트
+.venv\Scripts\python test_retrieval.py -q "무인 매장에서 물건을 훔치면?"
 ```
 
 ## 협업 규칙
