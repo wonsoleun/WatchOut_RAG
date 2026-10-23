@@ -93,3 +93,30 @@ RAG가 실제로 사용하는 필드는 아래 3개입니다. 나머지(`claims`
 - 필드를 **추가**하는 것은 `schema_version`을 올리지 않아도 됩니다.
 - 필드 이름을 **바꾸거나 삭제**할 때는 `schema_version`을 올리고 리포트 담당자에게 먼저 알립니다.
 - `event_type`을 추가할 때는 `src/query_builder.py`의 `EVENT_CONFIG`에 항목을 넣습니다.
+
+## 프롬프트에 넣을 수 있는 텍스트로 변환
+
+JSON 결과를 리포트 생성 AI의 프롬프트에 넣을 수 있게 글로 바꿔 주는 함수가 `src/prompt_formatter.py`에 있습니다.
+
+```python
+from src.rag_service import retrieve_for_segment
+from src.prompt_formatter import format_rag_context, build_report_prompt
+
+result = retrieve_for_segment(segment_json)
+
+context = format_rag_context(result)             # [참고 법령] [경찰 수사 절차] [주의] 블록만
+prompt  = build_report_prompt(segment_json, result)   # 프롬프트 전체 (기본 틀)
+```
+
+- **`format_rag_context`**: 리포트 담당자가 이미 정한 프롬프트 틀이 있다면, 이 블록만 그 틀의 원하는 위치에 끼워 넣으면 됩니다. 법령은 기본으로 1~2위만 넣습니다 (`max_laws`로 조절).
+- **`build_report_prompt`**: 사건 정보, 근거 프레임, 불확실한 점, 작성 규칙까지 포함한 기본 틀입니다. 규칙과 리포트 구성은 `REPORT_INSTRUCTIONS`에서 바꿀 수 있습니다.
+- `status`가 `skipped`이면 "해당 없음" 블록이 나오므로, 프롬프트가 깨지지 않습니다.
+
+파일로 확인할 때:
+
+```
+python run_segment.py examples/sample_input.json --format context
+python run_segment.py examples/sample_input.json --format prompt
+```
+
+결과 예시는 `examples/sample_report_prompt.txt`를 보세요. 이 예시는 임시 임베딩으로 만든 것이라 법령 순위가 실제와 다를 수 있습니다.

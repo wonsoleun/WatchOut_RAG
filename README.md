@@ -23,9 +23,10 @@ rag_kb/
 │  ├─ chunking.py             # 조문 단위 청킹
 │  ├─ kb.py                   # get_retriever() — 검색기
 │  ├─ query_builder.py        # event_type -> 검색 질의 매핑
-│  └─ rag_service.py          # retrieve_for_segment() — 팀원이 호출하는 진입점
+│  ├─ rag_service.py          # retrieve_for_segment() — 팀원이 호출하는 진입점
+│  └─ prompt_formatter.py     # RAG 결과 -> 리포트 AI 프롬프트용 텍스트
 ├─ docs/rag_output_schema.md  # RAG 출력 JSON 양식 (리포트 담당자용)
-├─ examples/sample_input.json # VLM 출력 예시
+├─ examples/                  # sample_input.json (VLM 출력 예시), sample_report_prompt.txt
 ├─ tests/retrieval_cases.json # 검색 테스트 질문과 정답 조문
 └─ chroma_db/                 # 자동 생성, Git 제외
 ```
