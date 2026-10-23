@@ -1,0 +1,16 @@
+{
+  "segment_id": "vid03_seg02",
+  "video_id": "vid03",
+  "start_time": "2026-10-12T21:13:40",
+  "end_time": "2026-10-12T21:15:05",
+  "event_type": "unpaid_exit",
+  "summary": "남성 1명이 냉장 진열대에서 음료 2개를 집은 뒤 키오스크를 거치지 않고 출입문으로 나감",
+  "claims": [
+    { "claim_id": "c1", "text": "냉장 진열대에서 음료 2개를 집음", "frame_ids": ["f_0312", "f_0318"] },
+    { "claim_id": "c2", "text": "키오스크 앞에 멈추지 않음", "frame_ids": ["f_0325"] },
+    { "claim_id": "c3", "text": "출입문으로 나감", "frame_ids": ["f_0331"] }
+  ],
+  "people_count": 1,
+  "confidence": "high",
+  "uncertain_points": ["키오스크가 화면 일부를 가려 결제 동작이 완전히 보이지 않음"]
+}
