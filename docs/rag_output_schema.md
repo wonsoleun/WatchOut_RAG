@@ -45,6 +45,7 @@ RAG가 실제로 사용하는 필드는 아래 4개입니다. 나머지(`claims`
     {
       "rank": 1,
       "match": "rule",
+      "paragraphs": [],
       "law_name": "형법",
       "article_no": "제329조",
       "article_title": "절도",
@@ -83,6 +84,7 @@ RAG가 실제로 사용하는 필드는 아래 4개입니다. 나머지(`claims`
 | `queries` | 실제로 검색에 쓴 질의. 결과가 이상할 때 원인을 찾는 용도 |
 | `legal_references` | 관련 법령 조문 (최대 3개). `match: rule`이 앞에, 그 뒤에 `search`가 거리순 |
 | `match` | `rule` 고정 조문 / `search` 검색으로 찾은 조문 (참고 수준) |
+| `paragraphs` | 조문 중 일부 항만 넣었을 때 그 항 목록 (예: `smoking`의 제9조는 `["④", "⑦", "⑧"]`). 비어 있으면 조문 전체(`rule`) 또는 검색된 부분(`search`). 인용할 때 "제9조제8항"처럼 항을 밝히세요 |
 | `procedure_references` | 경찰 수사 절차 단계. `rank` 순서가 진행 순서 (접수 → 수사 → 결정) |
 | `text` | 조문/절차 본문. 검색용 머리말과 보강 키워드는 제거한 원문 |
 | `article_no`, `article_title` | 인용 표기용. 예: `형법 제329조(절도)` |

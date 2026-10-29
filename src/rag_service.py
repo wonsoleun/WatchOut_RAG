@@ -15,6 +15,7 @@ from src.query_builder import EVENT_CONFIG, build_queries
 SCHEMA_VERSION = "1.1"
 REQUIRED_FIELDS = ("segment_id", "event_type")
 KEYWORD_LINE_RE = re.compile(r"^\(관련 키워드:.*\)$")
+PARAGRAPH_RE = re.compile(r"^[①-⑳]", re.MULTILINE)  # 항 표시 ①~⑳
 LOW_CONFIDENCE = {"low", "낮음"}
 
 
@@ -34,20 +35,41 @@ def _get_docs(store, where: dict) -> list[Document]:
     return [Document(page_content=d, metadata=m) for _, d, m in rows]
 
 
-def _core_articles(store, keys: list[str], query: str) -> tuple[list[Document], list[str]]:
-    """'형법 제329조' 목록 -> 해당 조문의 청크. 지식 베이스에 없는 키는 따로 돌려준다.
+def _split_paragraphs(text: str) -> dict[str, str]:
+    """조문 본문 -> {'④': '④ 다음 각 호의 ...\\n1. ...', ...}. 항 표시(①)로 시작하는 줄 기준."""
+    parts: dict[str, str] = {}
+    starts = [m.start() for m in PARAGRAPH_RE.finditer(text)]
+    for i, s in enumerate(starts):
+        end = starts[i + 1] if i + 1 < len(starts) else len(text)
+        parts[text[s]] = text[s:end].strip()
+    return parts
 
-    긴 조문이 여러 청크로 나뉘었으면 query와 가장 가까운 청크를 고른다 (예: 제34조 중 금연구역 흡연 항).
+
+def _core_articles(store, entries: list) -> tuple[list[tuple[Document, str, list[str]]], list[str]]:
+    """EVENT_CONFIG의 core_articles -> [(조문 청크, 넣을 본문, 고른 항)], 지식 베이스에 없는 항목.
+
+    항목은 '형법 제329조'(조문 전체) 또는 {'article': ..., 'paragraphs': ['④', '⑧']}(그 항만).
+    청크가 아니라 조문 전체 본문(metadata article_text)에서 잘라 내므로, 긴 조문이 어떻게 나뉘었든 결과가 같다.
     """
     found, missing = [], []
-    for key in keys:
+    for entry in entries:
+        key, wanted = (entry, []) if isinstance(entry, str) else (entry["article"], entry["paragraphs"])
         law_name, article_no = key.rsplit(" ", 1)
-        where = {"$and": [{"doc_type": "law"}, {"law_name": law_name}, {"article_no": article_no}]}
-        docs = store.similarity_search(query or key, k=1, filter=where)
-        if docs:
-            found.append(docs[0])
-        else:
+        docs = _get_docs(store, {"$and": [
+            {"doc_type": "law"}, {"law_name": law_name}, {"article_no": article_no},
+        ]})
+        if not docs:
             missing.append(key)
+            continue
+        full = docs[0].metadata["article_text"]
+        if not wanted:
+            found.append((docs[0], full, []))
+            continue
+        parts = _split_paragraphs(full)
+        missing += [f"{key} {p}" for p in wanted if p not in parts]
+        picked = [p for p in parts if p in wanted]  # 조문 순서대로
+        if picked:
+            found.append((docs[0], "\n".join(parts[p] for p in picked), picked))
     return found, missing
 
 
@@ -65,7 +87,8 @@ def _search(store, queries: list[str], doc_type: str, k: int,
     return sorted(best.values(), key=lambda x: x[1])[:k]
 
 
-def _law_item(rank: int, doc: Document, dist: float | None) -> dict:
+def _law_item(rank: int, doc: Document, dist: float | None,
+              text: str | None = None, paragraphs: list[str] | None = None) -> dict:
     m = doc.metadata
     return {
         "rank": rank,
@@ -73,7 +96,8 @@ def _law_item(rank: int, doc: Document, dist: float | None) -> dict:
         "law_name": m["law_name"],
         "article_no": m["article_no"],
         "article_title": m["article_title"],
-        "text": _clean_text(doc),
+        "paragraphs": paragraphs or [],  # 일부 항만 넣었으면 그 항 목록 (예: ['④', '⑧']), 비어 있으면 아님
+        "text": text if text is not None else _clean_text(doc),
         "source_file": m["source"],
         "enforcement": m.get("enforcement", ""),
         "distance": None if dist is None else round(float(dist), 4),
@@ -131,15 +155,17 @@ def retrieve_for_segment(segment: dict, k_law: int = 3, store=None) -> dict:
     # 1) 규칙으로 고정된 조문 -> 2) 벡터 검색으로 찾은 관련 조문 (거리 임계값 이내, 중복 제외)
     queries = build_queries(segment)
     result["queries"]["legal"] = queries
-    core, missing = _core_articles(store, cfg.get("core_articles", []), queries[0] if queries else "")
+    core, missing = _core_articles(store, cfg.get("core_articles", []))
     for key in missing:
         result["warnings"].append(f"설정된 핵심 조문이 지식 베이스에 없습니다: {key}")
-    laws: list[tuple[Document, float | None]] = [(d, None) for d in core]
-    taken = {label(d) for d in core}
+    items = [_law_item(0, d, None, text, picked) for d, text, picked in core]
+    taken = {label(d) for d, _, _ in core}
     for doc, dist in _search(store, queries, "law", k_law, config.LAW_MAX_DISTANCE):
-        if label(doc) not in taken and len(laws) < k_law:
-            laws.append((doc, dist))
-    result["legal_references"] = [_law_item(i, d, s) for i, (d, s) in enumerate(laws, 1)]
+        if label(doc) not in taken and len(items) < k_law:
+            items.append(_law_item(0, doc, dist))
+    for i, item in enumerate(items, 1):
+        item["rank"] = i
+    result["legal_references"] = items
 
     # 절차는 검색하지 않고 설정된 섹션을 순서대로 가져온다
     sections = cfg.get("procedures", [])

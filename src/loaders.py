@@ -26,6 +26,8 @@ def load_law_json(path: Path = config.LAW_JSON) -> list[Document]:
                 "enforcement": a.get("enforcement", ""),
                 # Chroma 메타데이터는 리스트를 못 넣으므로 문자열로 저장. 청킹 때 본문 끝에 붙임.
                 "keywords": ", ".join(a.get("keywords", [])),
+                # 조문 전체 본문. 청크와 상관없이 규칙 조문(core_articles)의 항을 골라 내는 데 씀
+                "article_text": a["text"],
                 "source": a["source_pdf"],
             },
         ))

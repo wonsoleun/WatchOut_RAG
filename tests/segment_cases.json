@@ -21,10 +21,12 @@
     "warning_contains": "장시간 체류만으로는 범죄가 아닙니다"
   },
   {
-    "name": "흡연 -> 국민건강증진법 제34조 1순위, 과태료 안내, 경찰 절차 없음",
+    "name": "흡연 -> 국민건강증진법 제9조(금연구역)·제34조(과태료) 해당 항, 경찰 절차 없음",
     "segment": {"segment_id": "t4", "event_type": "smoking", "summary": "매장 안에서 담배를 피움"},
     "status": "ok",
-    "law_rank1": "국민건강증진법 제34조",
+    "law_rank1": "국민건강증진법 제9조",
+    "laws_include": ["국민건강증진법 제34조"],
+    "text_contains": ["지정된 금연구역에서 흡연하여서는 아니 된다", "금연구역에서 흡연을 한 사람", "10만원 이하의 과태료"],
     "warning_contains": "과태료 대상",
     "no_procedures": true
   },

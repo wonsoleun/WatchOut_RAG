@@ -26,6 +26,13 @@ def check(case: dict, result: dict) -> list[str]:
         errors.append(f"중복 조문: {laws}")
     if "law_rank1" in case and (not laws or laws[0] != case["law_rank1"]):
         errors.append(f"1순위 조문 {laws[:1]} != {case['law_rank1']}")
+    for key in case.get("laws_include", []):
+        if key not in laws:
+            errors.append(f"조문 {key} 없음: {laws}")
+    texts = "\n".join(r["text"] for r in result["legal_references"])
+    for s in case.get("text_contains", []):
+        if s not in texts:
+            errors.append(f"조문 본문에 '{s}' 없음")
     procs = [p["section"] for p in result["procedure_references"]]
     if "first_procedure" in case and (not procs or procs[0] != case["first_procedure"]):
         errors.append(f"첫 절차 {procs[:1]} != {case['first_procedure']}")

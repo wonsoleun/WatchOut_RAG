@@ -8,6 +8,9 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 import config
 
+# 청크 메타데이터 구조를 바꾸면 올림 -> 예전 인덱스를 쓰면 재빌드 경고가 나옴
+INDEX_FORMAT = "2"  # 2: article_text 추가
+
 
 def build_fingerprint() -> str:
     """인덱스에 영향을 주는 데이터·설정의 해시. build_kb.py가 컬렉션에 저장하고, 열 때 비교한다."""
@@ -16,6 +19,7 @@ def build_fingerprint() -> str:
         h.update(p.name.encode())
         h.update(p.read_bytes())
     h.update(f"{config.EMBEDDING_MODEL}|{config.CHUNK_MAX_LEN}|{config.CHUNK_OVERLAP}".encode())
+    h.update(INDEX_FORMAT.encode())
     return h.hexdigest()[:16]
 
 

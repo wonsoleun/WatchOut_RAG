@@ -37,7 +37,10 @@ def format_rag_context(result: dict, max_laws: int = 2, max_procedures: int = 5)
     if laws:
         for i, law in enumerate(laws, 1):
             enforce = f" (시행 {law['enforcement']})" if law.get("enforcement") else ""
-            parts.append(f"{i}. {law['law_name']} {law['article_no']}({law['article_title']}){enforce}")
+            # 일부 항만 넣은 조문은 어느 항인지 밝힘. 예) 제4항·제8항 발췌
+            picked = "·".join(f"제{ord(p) - 0x2460 + 1}항" for p in law.get("paragraphs", []))
+            excerpt = f" {picked} 발췌" if picked else ""
+            parts.append(f"{i}. {law['law_name']} {law['article_no']}({law['article_title']}){excerpt}{enforce}")
             parts.append(_indent(law["text"]))
     else:
         parts.append("검색된 법령 없음")

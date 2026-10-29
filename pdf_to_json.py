@@ -74,7 +74,8 @@ def parse_pdf(path: Path, keywords: dict[str, list[str]]) -> list[dict]:
     lines = _clean_lines(raw)
     law_name = lines[0]  # 머리말 첫 줄이 법령명 ("형법", "개인정보 보호법")
     enforce = (ENFORCE_RE.search(raw) or [None, ""])[1].strip()
-    text = "\n".join(lines)
+    # 페이지마다 반복되는 법령명 머리글 줄은 본문에 섞이지 않게 뺀다
+    text = "\n".join(ln for ln in lines if ln != law_name)
 
     items = []
     matches = list(ARTICLE_RE.finditer(text))
@@ -116,8 +117,15 @@ def main(output: Path) -> None:
         for a in json.loads(config.LAW_JSON.read_text(encoding="utf-8")):
             keywords[f"{a['law_name']} {a['article_no']}"] = a.get("keywords", [])
     items: list[dict] = []
+    seen: dict[str, str] = {}
     for p in sorted(config.LAW_DIR.glob("*.pdf")):
-        items += parse_pdf(p, keywords)
+        for a in parse_pdf(p, keywords):
+            key = f"{a['law_name']} {a['article_no']}"
+            if key in seen:  # 한 PDF에 여러 조문이 들어 있어 다른 PDF와 겹치는 경우
+                print(f"[중복] {key}: {seen[key]}에 이미 있어 {p.name}의 것은 건너뜀")
+                continue
+            seen[key] = p.name
+            items.append(a)
     output.write_text(json.dumps(items, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"\n조문 {len(items)}개 -> {output}")
 
