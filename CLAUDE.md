@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A local RAG knowledge base that retrieves Korean **law articles** (형법, 개인정보 보호법) and **police investigation procedures** for unmanned-store CCTV incident reports. It sits between an upstream VLM (which emits one JSON per video segment) and a downstream report-generation LLM. Fully local: ChromaDB + HuggingFace embeddings (`BAAI/bge-m3`), no API keys. Code comments, docs, and data are in Korean.
+A local RAG knowledge base that retrieves Korean **law articles** (형법, 국민건강증진법, 개인정보 보호법) and **police investigation procedures** for unmanned-store CCTV incident reports. It sits between an upstream VLM (which emits one JSON per video segment) and a downstream report-generation LLM. Fully local: ChromaDB + HuggingFace embeddings (`BAAI/bge-m3`), no API keys. Code comments, docs, and data are in Korean.
 
 ## Commands
 

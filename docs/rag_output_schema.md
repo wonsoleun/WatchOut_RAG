@@ -24,7 +24,9 @@ RAG가 실제로 사용하는 필드는 아래 4개입니다. 나머지(`claims`
 | `summary` | | 검색 질의에 추가 |
 | `confidence` | | `"low"`이면 `warnings`에 확신도 경고 추가 |
 
-`event_type` 값: `unpaid_exit`, `vandalism`, `long_stay`, `normal`, `unclear` (그 외 값은 `skipped`)
+`event_type` 값: `unpaid_exit`, `vandalism`, `long_stay`, `smoking`, `normal`, `unclear` (그 외 값은 `skipped`)
+
+`smoking`은 형사 사건이 아니라 과태료 사안이라 `procedure_references`가 비어 있고, 대신 `warnings`에 과태료 안내가 들어갑니다.
 
 ## 출력
 

@@ -34,14 +34,16 @@ def _get_docs(store, where: dict) -> list[Document]:
     return [Document(page_content=d, metadata=m) for _, d, m in rows]
 
 
-def _core_articles(store, keys: list[str]) -> tuple[list[Document], list[str]]:
-    """'형법 제329조' 목록 -> 해당 조문의 첫 청크. 지식 베이스에 없는 키는 따로 돌려준다."""
+def _core_articles(store, keys: list[str], query: str) -> tuple[list[Document], list[str]]:
+    """'형법 제329조' 목록 -> 해당 조문의 청크. 지식 베이스에 없는 키는 따로 돌려준다.
+
+    긴 조문이 여러 청크로 나뉘었으면 query와 가장 가까운 청크를 고른다 (예: 제34조 중 금연구역 흡연 항).
+    """
     found, missing = [], []
     for key in keys:
         law_name, article_no = key.rsplit(" ", 1)
-        docs = _get_docs(store, {"$and": [
-            {"doc_type": "law"}, {"law_name": law_name}, {"article_no": article_no},
-        ]})
+        where = {"$and": [{"doc_type": "law"}, {"law_name": law_name}, {"article_no": article_no}]}
+        docs = store.similarity_search(query or key, k=1, filter=where)
         if docs:
             found.append(docs[0])
         else:
@@ -127,12 +129,12 @@ def retrieve_for_segment(segment: dict, k_law: int = 3, store=None) -> dict:
     store = store or get_vectorstore()
 
     # 1) 규칙으로 고정된 조문 -> 2) 벡터 검색으로 찾은 관련 조문 (거리 임계값 이내, 중복 제외)
-    core, missing = _core_articles(store, cfg.get("core_articles", []))
+    queries = build_queries(segment)
+    result["queries"]["legal"] = queries
+    core, missing = _core_articles(store, cfg.get("core_articles", []), queries[0] if queries else "")
     for key in missing:
         result["warnings"].append(f"설정된 핵심 조문이 지식 베이스에 없습니다: {key}")
     laws: list[tuple[Document, float | None]] = [(d, None) for d in core]
-    queries = build_queries(segment)
-    result["queries"]["legal"] = queries
     taken = {label(d) for d in core}
     for doc, dist in _search(store, queries, "law", k_law, config.LAW_MAX_DISTANCE):
         if label(doc) not in taken and len(laws) < k_law:

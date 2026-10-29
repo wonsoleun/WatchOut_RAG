@@ -18,7 +18,7 @@ CRIME_PROCEDURES = [
     "3단계 결정 - 3. 수사중지 결정",
 ]
 
-# covered=False : 현재 지식 베이스(형법 6개 조문, 개인정보 보호법 3개 조문)에 해당 법령이 없음
+# covered=False : 현재 지식 베이스(형법 6개, 국민건강증진법 1개, 개인정보 보호법 3개 조문)에 해당 법령이 없음
 EVENT_CONFIG: dict[str, dict] = {
     "unpaid_exit": {
         "label": "미결제 반출",
@@ -48,6 +48,17 @@ EVENT_CONFIG: dict[str, dict] = {
         "procedures": CRIME_PROCEDURES,
         "note": "장시간 체류만으로는 범죄가 아닙니다. 퇴거 요구에 응하지 않았거나 소란으로 영업을 방해한 사실이 "
                 "영상에서 확인될 때만 아래 조문이 적용될 수 있습니다.",
+    },
+    "smoking": {
+        "label": "매장 내 흡연",
+        "covered": True,
+        "search": True,
+        "core_articles": ["국민건강증진법 제34조"],
+        "legal_queries": ["매장 안에서 담배를 피운 경우 금연구역 흡연 과태료"],
+        "procedures": [],  # 과태료 사안이라 경찰 고소 절차와 맞지 않음
+        "note": "금연구역 흡연은 형사처벌이 아니라 10만원 이하의 과태료 대상입니다(국민건강증진법 제34조제3항제2호). "
+                "과태료는 시ㆍ도지사 또는 시장ㆍ군수ㆍ구청장이 부과합니다(같은 조 제4항). "
+                "매장이 금연구역에 해당하는지(제9조)는 지식 베이스에 없으므로 따로 확인이 필요합니다.",
     },
     "normal": {"label": "이상 없음", "covered": True, "search": False},
     "unclear": {"label": "판단 어려움", "covered": True, "search": False},
