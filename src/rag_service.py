@@ -12,9 +12,10 @@ from src.chunking import label
 from src.kb import get_vectorstore
 from src.query_builder import EVENT_CONFIG, build_queries
 
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 REQUIRED_FIELDS = ("segment_id", "event_type")
 KEYWORD_LINE_RE = re.compile(r"^\(관련 키워드:.*\)$")
+LOW_CONFIDENCE = {"low", "낮음"}
 
 
 def _clean_text(doc: Document) -> str:
@@ -25,43 +26,69 @@ def _clean_text(doc: Document) -> str:
     return "\n".join(ln for ln in lines if not KEYWORD_LINE_RE.match(ln.strip())).strip()
 
 
-def _search(store, queries: list[str], doc_type: str, k: int) -> list[tuple[Document, float]]:
-    """여러 질의의 결과를 합치고, 같은 문서는 가장 가까운 거리만 남겨 상위 k개를 반환."""
+def _get_docs(store, where: dict) -> list[Document]:
+    """메타데이터 조건으로 청크를 가져온다 (인덱싱 순서대로)."""
+    res = store.get(where=where, include=["documents", "metadatas"])
+    rows = sorted(zip(res["ids"], res["documents"], res["metadatas"]),
+                  key=lambda r: int(r[0].rsplit("::", 1)[1]))
+    return [Document(page_content=d, metadata=m) for _, d, m in rows]
+
+
+def _core_articles(store, keys: list[str]) -> tuple[list[Document], list[str]]:
+    """'형법 제329조' 목록 -> 해당 조문의 첫 청크. 지식 베이스에 없는 키는 따로 돌려준다."""
+    found, missing = [], []
+    for key in keys:
+        law_name, article_no = key.rsplit(" ", 1)
+        docs = _get_docs(store, {"$and": [
+            {"doc_type": "law"}, {"law_name": law_name}, {"article_no": article_no},
+        ]})
+        if docs:
+            found.append(docs[0])
+        else:
+            missing.append(key)
+    return found, missing
+
+
+def _search(store, queries: list[str], doc_type: str, k: int,
+            max_distance: float | None = None) -> list[tuple[Document, float]]:
+    """여러 질의의 결과를 합치고, 같은 조문/섹션은 가장 가까운 청크 하나만 남겨 상위 k개를 반환."""
     best: dict[str, tuple[Document, float]] = {}
     for q in queries:
         for doc, dist in store.similarity_search_with_score(q, k=k, filter={"doc_type": doc_type}):
-            key = f"{doc.metadata['source']}::{label(doc)}::{hash(doc.page_content)}"
+            if max_distance is not None and dist > max_distance:
+                continue
+            key = label(doc)  # 긴 조문이 여러 청크로 나뉘어도 결과에는 한 번만
             if key not in best or dist < best[key][1]:
                 best[key] = (doc, dist)
     return sorted(best.values(), key=lambda x: x[1])[:k]
 
 
-def _law_item(rank: int, doc: Document, dist: float) -> dict:
+def _law_item(rank: int, doc: Document, dist: float | None) -> dict:
     m = doc.metadata
     return {
         "rank": rank,
+        "match": "rule" if dist is None else "search",
         "law_name": m["law_name"],
         "article_no": m["article_no"],
         "article_title": m["article_title"],
         "text": _clean_text(doc),
         "source_file": m["source"],
         "enforcement": m.get("enforcement", ""),
-        "distance": round(float(dist), 4),
+        "distance": None if dist is None else round(float(dist), 4),
     }
 
 
-def _procedure_item(rank: int, doc: Document, dist: float) -> dict:
+def _procedure_item(rank: int, doc: Document) -> dict:
     m = doc.metadata
     return {
         "rank": rank,
         "section": m["section"],
         "text": _clean_text(doc),
         "source_file": m["source"],
-        "distance": round(float(dist), 4),
     }
 
 
-def retrieve_for_segment(segment: dict, k_law: int = 3, k_procedure: int = 2, store=None) -> dict:
+def retrieve_for_segment(segment: dict, k_law: int = 3, store=None) -> dict:
     """VLM 세그먼트 1개 -> RAG 결과 1개."""
     for f in REQUIRED_FIELDS:
         if not segment.get(f):
@@ -75,7 +102,7 @@ def retrieve_for_segment(segment: dict, k_law: int = 3, k_procedure: int = 2, st
         "event_type": event_type,
         "status": "ok",
         "warnings": [],
-        "queries": {"legal": [], "procedure": []},
+        "queries": {"legal": []},
         "legal_references": [],
         "procedure_references": [],
     }
@@ -90,17 +117,44 @@ def retrieve_for_segment(segment: dict, k_law: int = 3, k_procedure: int = 2, st
         result["warnings"].append(f"event_type '{event_type}'은(는) 법령 검색 대상이 아닙니다.")
         return result
 
-    store = store or get_vectorstore()
-    queries = build_queries(segment)
-    result["queries"] = queries
+    if str(segment.get("confidence", "")).strip().lower() in LOW_CONFIDENCE:
+        result["warnings"].append(
+            "VLM 분석 확신도가 낮습니다. 이상행동 자체가 확인되지 않았을 수 있으니 사람이 영상을 검토한 뒤 법령을 적용하세요."
+        )
+    if cfg.get("note"):
+        result["warnings"].append(cfg["note"])
 
-    laws = _search(store, queries["legal"], "law", k_law)
-    procs = _search(store, queries["procedure"], "manual", k_procedure)
+    store = store or get_vectorstore()
+
+    # 1) 규칙으로 고정된 조문 -> 2) 벡터 검색으로 찾은 관련 조문 (거리 임계값 이내, 중복 제외)
+    core, missing = _core_articles(store, cfg.get("core_articles", []))
+    for key in missing:
+        result["warnings"].append(f"설정된 핵심 조문이 지식 베이스에 없습니다: {key}")
+    laws: list[tuple[Document, float | None]] = [(d, None) for d in core]
+    queries = build_queries(segment)
+    result["queries"]["legal"] = queries
+    taken = {label(d) for d in core}
+    for doc, dist in _search(store, queries, "law", k_law, config.LAW_MAX_DISTANCE):
+        if label(doc) not in taken and len(laws) < k_law:
+            laws.append((doc, dist))
     result["legal_references"] = [_law_item(i, d, s) for i, (d, s) in enumerate(laws, 1)]
-    result["procedure_references"] = [_procedure_item(i, d, s) for i, (d, s) in enumerate(procs, 1)]
+
+    # 절차는 검색하지 않고 설정된 섹션을 순서대로 가져온다
+    sections = cfg.get("procedures", [])
+    if sections:
+        docs = {d.metadata["section"]: d for d in _get_docs(store, {"$and": [
+            {"doc_type": "manual"}, {"section": {"$in": sections}},
+        ]})}
+        for s in sections:
+            if s not in docs:
+                result["warnings"].append(f"설정된 절차 섹션이 지식 베이스에 없습니다: {s}")
+        ordered = [docs[s] for s in sections if s in docs]
+        result["procedure_references"] = [_procedure_item(i, d) for i, d in enumerate(ordered, 1)]
 
     if not cfg["covered"]:
         result["warnings"].append(
             f"'{cfg['label']}'에 해당하는 법령이 지식 베이스에 없습니다. legal_references는 참고용이며 근거로 인용하지 마세요."
         )
+    if not result["legal_references"]:
+        result["warnings"].append("관련성이 충분한 법령을 찾지 못했습니다. 법령 항목은 '해당 조문 없음'으로 작성하세요.")
     return result

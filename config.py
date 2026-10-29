@@ -4,7 +4,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 # 데이터 / 저장 위치
-LAW_DIR = ROOT / "data" / "laws"
+LAW_DIR = ROOT / "data" / "laws"         # 원본 PDF 보관 (pdf_to_json.py 입력)
+LAW_JSON = LAW_DIR / "laws.json"         # 검수된 조문 데이터. build_kb.py는 이 파일만 읽음
 MANUAL_DIR = ROOT / "data" / "manuals"
 CHROMA_DIR = ROOT / "chroma_db"          # Git에 올리지 않음 (build_kb.py로 재생성)
 COLLECTION_NAME = "store_kb"
@@ -19,3 +20,7 @@ CHUNK_OVERLAP = 100
 
 # 검색 기본값
 TOP_K = 4
+
+# 벡터 검색으로 추가하는 법령의 최대 거리 (작을수록 엄격). 임베딩 모델을 바꾸면 다시 맞춰야 함.
+# 규칙으로 고정된 조문(EVENT_CONFIG의 core_articles)에는 적용하지 않음.
+LAW_MAX_DISTANCE = 0.95

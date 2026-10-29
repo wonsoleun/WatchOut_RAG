@@ -1,0 +1,40 @@
+[
+  {
+    "name": "미결제 반출 -> 절도 조문이 1순위, 절차는 접수부터",
+    "segment": {"segment_id": "t1", "event_type": "unpaid_exit", "confidence": "high",
+                "summary": "남성 1명이 냉장 진열대에서 음료 2개를 집은 뒤 키오스크를 거치지 않고 출입문으로 나감"},
+    "status": "ok",
+    "law_rank1": "형법 제329조",
+    "first_procedure": "1단계 접수 - 고소장 등 접수 및 담당 경찰관 배정"
+  },
+  {
+    "name": "기물 파손 -> 재물손괴 조문이 1순위",
+    "segment": {"segment_id": "t2", "event_type": "vandalism", "summary": "남성이 발로 차서 냉장고 문 유리를 깨뜨림"},
+    "status": "ok",
+    "law_rank1": "형법 제366조",
+    "first_procedure": "1단계 접수 - 고소장 등 접수 및 담당 경찰관 배정"
+  },
+  {
+    "name": "장시간 체류 -> 범죄 단정 금지 경고",
+    "segment": {"segment_id": "t3", "event_type": "long_stay", "summary": "한 사람이 2시간 동안 매장 테이블에 앉아 있음"},
+    "status": "ok",
+    "warning_contains": "장시간 체류만으로는 범죄가 아닙니다"
+  },
+  {
+    "name": "확신도 낮음 -> 경고",
+    "segment": {"segment_id": "t5", "event_type": "unpaid_exit", "confidence": "low", "summary": "물건을 들고 나간 것으로 보임"},
+    "status": "ok",
+    "law_rank1": "형법 제329조",
+    "warning_contains": "확신도가 낮습니다"
+  },
+  {
+    "name": "이상 없음 -> 검색 안 함",
+    "segment": {"segment_id": "t6", "event_type": "normal"},
+    "status": "skipped"
+  },
+  {
+    "name": "모르는 event_type -> 검색 안 함",
+    "segment": {"segment_id": "t7", "event_type": "fighting"},
+    "status": "skipped"
+  }
+]

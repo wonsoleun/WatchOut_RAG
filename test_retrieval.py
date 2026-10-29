@@ -1,5 +1,8 @@
 """검색 성능 테스트. tests/retrieval_cases.json 의 각 질문이 Top-K 안에서 정답 조문/섹션을 찾는지 확인.
 
+expect 는 label()과 정확히 같아야 함 ('형법 제329조', '3단계 결정 - 1. 송치 결정').
+HIT = expect 중 하나 이상 찾음, Recall = 찾은 expect 수 / 전체 expect 수.
+
 사용법:
     python test_retrieval.py            # 전체 케이스
     python test_retrieval.py -k 3       # Top-3 기준
@@ -7,6 +10,7 @@
 """
 import argparse
 import json
+import sys
 
 import config
 from src.chunking import label
@@ -23,6 +27,7 @@ def show(db, query: str, k: int):
 
 
 def main(k: int, query: str | None) -> None:
+    sys.stdout.reconfigure(encoding="utf-8")  # Windows 콘솔에서 한글 깨짐 방지
     db = get_vectorstore()
 
     if query:
@@ -31,14 +36,16 @@ def main(k: int, query: str | None) -> None:
         return
 
     cases = json.loads(CASES_PATH.read_text(encoding="utf-8"))
-    hit = 0
+    hit = n_found = n_expect = 0
     for case in cases:
         print(f"Q. {case['query']}   (정답: {', '.join(case['expect'])})")
-        found = show(db, case["query"], k)
-        ok = any(e in f for e in case["expect"] for f in found)
-        hit += ok
-        print("   ->", "✅ HIT" if ok else "❌ MISS", "\n")
-    print(f"Hit@{k}: {hit}/{len(cases)}")
+        found = set(show(db, case["query"], k))
+        got = [e for e in case["expect"] if e in found]  # 부분 문자열이 아닌 정확 일치
+        hit += bool(got)
+        n_found += len(got)
+        n_expect += len(case["expect"])
+        print("   ->", "✅ HIT" if got else "❌ MISS", f"({len(got)}/{len(case['expect'])})\n")
+    print(f"Hit@{k}: {hit}/{len(cases)}   Recall@{k}: {n_found}/{n_expect}")
 
 
 if __name__ == "__main__":

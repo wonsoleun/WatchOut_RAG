@@ -17,10 +17,11 @@ def _indent(text: str, prefix: str = "   ") -> str:
     return "\n".join(prefix + ln for ln in text.splitlines())
 
 
-def format_rag_context(result: dict, max_laws: int = 2, max_procedures: int = 2) -> str:
+def format_rag_context(result: dict, max_laws: int = 2, max_procedures: int = 5) -> str:
     """RAG 결과 -> 프롬프트용 텍스트 블록.
 
     max_laws: 법령은 1~2위만 쓰는 것을 권장 (뒤 순위에는 관련 없는 조문이 섞일 수 있음)
+    max_procedures: 절차는 접수 -> 수사 -> 결정 순서로 들어 있으므로 앞에서부터 자른다
     """
     if result.get("status") != "ok":
         reasons = " ".join(result.get("warnings", []))

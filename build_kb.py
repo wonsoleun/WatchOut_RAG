@@ -5,6 +5,7 @@
     python build_kb.py --dry-run   # 임베딩 없이 청크만 확인 (모델 다운로드 불필요)
 """
 import argparse
+import sys
 
 import config
 from src.chunking import chunk, label
@@ -12,6 +13,7 @@ from src.loaders import load_all
 
 
 def main(dry_run: bool) -> None:
+    sys.stdout.reconfigure(encoding="utf-8")  # Windows 콘솔에서 한글 깨짐 방지
     docs = load_all()
     chunks = chunk(docs)
     print(f"문서 {len(docs)}개 -> 청크 {len(chunks)}개")
@@ -25,7 +27,7 @@ def main(dry_run: bool) -> None:
 
     from langchain_chroma import Chroma
 
-    from src.kb import get_embeddings  # 모델 로드는 필요할 때만
+    from src.kb import build_fingerprint, get_embeddings  # 모델 로드는 필요할 때만
 
     embeddings = get_embeddings()
 
@@ -43,6 +45,8 @@ def main(dry_run: bool) -> None:
         ids=ids,
         collection_name=config.COLLECTION_NAME,
         persist_directory=str(config.CHROMA_DIR),
+        # 검색할 때 인덱스가 현재 데이터와 맞는지 확인하는 용도 (src/kb.py)
+        collection_metadata={"build_fingerprint": build_fingerprint()},
     )
     print(f"\n{len(chunks)}개 청크를 {config.CHROMA_DIR} 에 저장했습니다.")
 
