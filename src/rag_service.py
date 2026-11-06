@@ -8,9 +8,9 @@ import re
 from langchain_core.documents import Document
 
 import config
-from src.chunking import label
+from src.chunking import chunk_id, label
 from src.kb import get_vectorstore
-from src.query_builder import EVENT_CONFIG, build_queries
+from src.query_builder import EVENT_CONFIG, build_queries, resolve_event_type
 
 SCHEMA_VERSION = "1.1"
 REQUIRED_FIELDS = ("segment_id", "event_type")
@@ -92,6 +92,7 @@ def _law_item(rank: int, doc: Document, dist: float | None,
     m = doc.metadata
     return {
         "rank": rank,
+        "chunk_id": chunk_id(doc),
         "match": "rule" if dist is None else "search",
         "law_name": m["law_name"],
         "article_no": m["article_no"],
@@ -108,6 +109,7 @@ def _procedure_item(rank: int, doc: Document) -> dict:
     m = doc.metadata
     return {
         "rank": rank,
+        "chunk_id": chunk_id(doc),
         "section": m["section"],
         "text": _clean_text(doc),
         "source_file": m["source"],
@@ -133,7 +135,7 @@ def retrieve_for_segment(segment: dict, k_law: int = 3, store=None) -> dict:
         "procedure_references": [],
     }
 
-    cfg = EVENT_CONFIG.get(event_type)
+    cfg = EVENT_CONFIG.get(resolve_event_type(event_type))  # 출력 event_type은 입력 값 그대로 둔다
     if cfg is None:
         result["status"] = "skipped"
         result["warnings"].append(f"알 수 없는 event_type: {event_type}")

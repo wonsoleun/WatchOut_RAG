@@ -24,6 +24,7 @@ python test_segments.py             # golden tests for retrieve_for_segment (exi
 python run_segment.py examples/sample_input.json                  # RAG output JSON
 python run_segment.py examples/sample_input.json --format context # [참고 법령] block only
 python run_segment.py examples/sample_input.json --format prompt  # full report prompt
+python export_chunks.py             # data/ -> document_chunks.json for the backend DB (no model needed)
 ```
 
 There is no pytest/linter. Both test scripts need a built `chroma_db/`. `test_retrieval.py` scores raw vector search: `expect` strings must equal a `label()` exactly. `test_segments.py` checks per-event rules (rank-1 article, procedure order, warnings, no duplicate articles) and also runs every `EVENT_CONFIG` entry to catch `core_articles`/`procedures` names missing from the index.
@@ -47,7 +48,9 @@ There is no pytest/linter. Both test scripts need a built `chroma_db/`. `test_re
 3. `_clean_text` strips the `[...]` header and the keyword line so output `text` is statute text only (keywords are team-added search aids, not law text).
 4. Unknown or `search: False` event types return `status: "skipped"`; `covered: False`, `confidence: "low"`, a config `note`, or an empty law list each add a warning.
 
-The output JSON contract is documented in `docs/rag_output_schema.md` (`SCHEMA_VERSION` in `rag_service.py`, currently 1.1). The `event_type` set must stay in sync with what the VLM side emits; renaming/removing fields means bumping the version and updating the schema doc. `get_embeddings()` and the default store are `lru_cache`d, so bge-m3 loads once per process.
+The output JSON contract is documented in `docs/rag_output_schema.md` (`SCHEMA_VERSION` in `rag_service.py`, currently 1.1). The `event_type` set must stay in sync with what the VLM side emits; renaming/removing fields means bumping the version and updating the schema doc. **Backend integration**: the backend (`app/ai/interfaces.py`) `Retriever.search` returns only `document_chunks.id`s. `chunking.chunk_id()` (`law:형법 제329조` / `manual:<section>`) is that ID; it appears as `chunk_id` in every RAG reference, `export_chunks.py` writes the same IDs, and `src/backend_adapter.search_hits()` maps a `RetrievalQuery` to hits. `test_segments.py` fails if a returned `chunk_id` is not in the export. `EVENT_TYPE_ALIASES` maps backend names (`dumping`) to `EVENT_CONFIG` keys (`abandonment`).
+
+`get_embeddings()` and the default store are `lru_cache`d, so bge-m3 loads once per process.
 
 **Prompt formatting** (`src/prompt_formatter.py`): turns a RAG result into `[참고 법령] / [경찰 수사 절차] / [주의]` text blocks (`format_rag_context`) or a full default report prompt (`build_report_prompt`). Output must not assert guilt — see `DISCLAIMER` and `REPORT_INSTRUCTIONS`.
 

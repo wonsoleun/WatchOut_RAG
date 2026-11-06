@@ -38,6 +38,17 @@ EVENT_CONFIG: dict[str, dict] = {
         "legal_queries": ["매장 기물을 부수거나 파손한 경우 재물손괴의 처벌"],
         "procedures": CRIME_PROCEDURES,
     },
+    "abandonment": {
+        "label": "물건 유기·방치",
+        "covered": False,  # 경범죄 처벌법, 폐기물관리법 등 해당 법령이 아직 지식 베이스에 없음
+        "search": True,
+        "core_articles": [],
+        "legal_queries": ["매장에 쓰레기나 물건을 버리고 가거나 방치한 경우"],
+        "procedures": [],  # 형사 고소 절차와 맞지 않음
+        "note": "물건을 두고 가거나 버린 것만으로는 형법상 범죄로 단정할 수 없습니다. 쓰레기 투기라면 경범죄 처벌법이나 "
+                "폐기물관리법이 적용될 수 있으나, 현재 지식 베이스에는 해당 법령이 없습니다.",
+    },
+    # long_stay는 VLM README의 6개 값에는 없고 Backend 사건 유형에는 있음. 전처리가 계산한 체류 시간으로 지정 (VLM README 8장)
     "long_stay": {
         "label": "장시간 체류",
         "covered": True,
@@ -73,9 +84,20 @@ EVENT_CONFIG: dict[str, dict] = {
 }
 
 
+# 모듈마다 이름이 다른 같은 유형 -> EVENT_CONFIG 키. (VLM README: abandonment / Backend README: dumping)
+EVENT_TYPE_ALIASES: dict[str, str] = {
+    "dumping": "abandonment",
+}
+
+
+def resolve_event_type(event_type: str) -> str:
+    """별칭을 EVENT_CONFIG 키로 바꾼다. 모르는 값은 그대로 돌려준다."""
+    return EVENT_TYPE_ALIASES.get(event_type, event_type)
+
+
 def build_queries(segment: dict) -> list[str]:
     """segment(JSON dict) -> 법령 검색 질의 목록"""
-    cfg = EVENT_CONFIG[segment["event_type"]]
+    cfg = EVENT_CONFIG[resolve_event_type(segment["event_type"])]
     legal = list(cfg.get("legal_queries", []))
     summary = (segment.get("summary") or "").strip()
     if summary:
