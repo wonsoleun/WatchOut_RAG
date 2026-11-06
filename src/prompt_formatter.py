@@ -5,7 +5,7 @@
 - build_report_prompt(): VLM 세그먼트 + RAG 결과로 프롬프트 전체를 만든다. (기본 틀)
   리포트 담당자가 이미 정한 틀이 있으면 이 함수는 쓰지 않아도 된다.
 """
-from src.query_builder import EVENT_CONFIG
+from src.query_builder import EVENT_CONFIG, resolve_event_type
 
 DISCLAIMER = (
     "위 법령·절차는 검색된 참고 자료이며 법률 판단이 아니다. "
@@ -64,13 +64,30 @@ def format_rag_context(result: dict, max_laws: int = 2, max_procedures: int = 5)
     return "\n".join(parts) + "\n"
 
 
+def _format_time(segment: dict) -> str:
+    """사건 시간 표기.
+
+    - start_sec/end_sec (VLM README): 영상 시작 기준 초
+    - start_time/end_time 숫자 (Backend README): 원본 영상 기준 초로 변환된 값
+    - start_time/end_time 문자열: 백엔드가 절대 시각으로 바꾼 실제 촬영 시각
+    """
+    start, end = segment.get("start_time"), segment.get("end_time")
+    if start is None and end is None:
+        start, end = segment.get("start_sec"), segment.get("end_sec")
+    if start is None and end is None:
+        return "정보 없음"
+    if isinstance(start, (int, float)) or isinstance(end, (int, float)):
+        return f"{start}초 ~ {end}초 (영상 시작 기준, 실제 촬영 시각 아님)"
+    return f"{start} ~ {end}"
+
+
 def _format_incident(segment: dict) -> str:
-    cfg = EVENT_CONFIG.get(segment.get("event_type", ""), {})
+    cfg = EVENT_CONFIG.get(resolve_event_type(segment.get("event_type", "")), {})
     label = cfg.get("label", segment.get("event_type", ""))
     lines = [
         "[사건 정보]",
         f"- 구간 ID: {segment.get('segment_id')} (영상: {segment.get('video_id')})",
-        f"- 시간: {segment.get('start_time')} ~ {segment.get('end_time')}",
+        f"- 시간: {_format_time(segment)}",
         f"- 유형: {label} ({segment.get('event_type')})",
         f"- 인원: {segment.get('people_count')}명",
         f"- 분석 확신도: {segment.get('confidence')}",
@@ -81,6 +98,9 @@ def _format_incident(segment: dict) -> str:
     claims = segment.get("claims") or []
     if claims:
         for c in claims:
+            if isinstance(c, str):  # 근거 프레임 없이 문장만 온 경우
+                lines.append(f"- {c}")
+                continue
             frames = ", ".join(c.get("frame_ids", []))
             lines.append(f"- ({c.get('claim_id')}) {c.get('text')}  [프레임: {frames}]")
     else:
@@ -96,7 +116,7 @@ REPORT_INSTRUCTIONS = """당신은 무인점포 CCTV 이상행동 리포트를 �
 아래 [사건 정보]와 [참고 법령], [경찰 수사 절차]만 근거로 리포트를 작성하세요.
 
 작성 규칙:
-1. 제공되지 않은 사실, 법령, 조문 번호를 만들어 내지 않는다.
+1. 제공되지 않은 사실, 법령, 조문 번호, 실제 촬영 시각을 만들어 내지 않는다.
 2. 법령은 [참고 법령]에 있는 조문만 인용하고, 조문 번호와 제목을 그대로 쓴다.
 3. 사실 서술에는 근거 프레임 ID를 함께 적는다.
 4. [불확실한 점]은 리포트에 '판단 한계'로 반드시 적는다.

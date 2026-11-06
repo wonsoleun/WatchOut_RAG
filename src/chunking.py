@@ -35,3 +35,9 @@ def label(doc: Document) -> str:
     if m.get("doc_type") == "law":
         return f"{m['law_name']} {m['article_no']}"
     return m.get("section", m.get("source", "?"))
+
+
+def chunk_id(doc: Document) -> str:
+    """백엔드 document_chunks.id로 쓰는 고정 ID. 조문/섹션 단위라 인덱스를 다시 만들어도 바뀌지 않는다.
+    예) 'law:형법 제329조' / 'manual:3단계 결정 - 1. 송치 결정'"""
+    return f"{doc.metadata['doc_type']}:{label(doc)}"

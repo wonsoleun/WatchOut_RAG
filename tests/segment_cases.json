@@ -31,6 +31,20 @@
     "no_procedures": true
   },
   {
+    "name": "물건 유기·방치 -> 지식 베이스에 법령 없음 경고, 경찰 절차 없음",
+    "segment": {"segment_id": "t8", "event_type": "abandonment", "summary": "남성이 매장 구석에 쓰레기 봉투를 두고 나감"},
+    "status": "ok",
+    "warning_contains": "지식 베이스에 없습니다",
+    "no_procedures": true
+  },
+  {
+    "name": "dumping(백엔드 이름) -> abandonment와 같은 처리, 출력 event_type은 입력 그대로",
+    "segment": {"segment_id": "t9", "event_type": "dumping", "summary": "매장 입구에 쓰레기를 버리고 감"},
+    "status": "ok",
+    "warning_contains": "지식 베이스에 없습니다",
+    "no_procedures": true
+  },
+  {
     "name": "확신도 낮음 -> 경고",
     "segment": {"segment_id": "t5", "event_type": "unpaid_exit", "confidence": "low", "summary": "물건을 들고 나간 것으로 보임"},
     "status": "ok",

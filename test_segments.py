@@ -1,7 +1,8 @@
 """retrieve_for_segment() 골든 테스트. tests/segment_cases.json 의 각 세그먼트 결과가 기대와 맞는지 확인.
 
 검색 품질(test_retrieval.py)과 달리, event_type별 규칙(핵심 조문, 절차 순서, 경고)이 지켜지는지 본다.
-또한 중복 조문이 없는지, 설정된 절차 섹션이 모두 지식 베이스에 있는지도 확인한다.
+또한 중복 조문이 없는지, 설정된 절차 섹션이 모두 지식 베이스에 있는지,
+결과의 chunk_id가 모두 export_chunks.py 출력(백엔드 document_chunks)에 있는지도 확인한다.
 
 사용법:
     python test_segments.py
@@ -10,11 +11,14 @@ import json
 import sys
 
 import config
+from src.chunking import chunk_id
 from src.kb import get_vectorstore
+from src.loaders import load_all
 from src.query_builder import EVENT_CONFIG
 from src.rag_service import retrieve_for_segment
 
 CASES_PATH = config.ROOT / "tests" / "segment_cases.json"
+EXPORT_IDS = {chunk_id(d) for d in load_all()}  # export_chunks.py가 백엔드에 적재하는 id
 
 
 def check(case: dict, result: dict) -> list[str]:
@@ -42,6 +46,10 @@ def check(case: dict, result: dict) -> list[str]:
         errors.append(f"경고에 '{case['warning_contains']}' 없음: {result['warnings']}")
     if any("지식 베이스에 없습니다: " in w for w in result["warnings"]):
         errors.append(f"설정과 지식 베이스 불일치: {result['warnings']}")
+    hit_ids = [r["chunk_id"] for r in result["legal_references"] + result["procedure_references"]]
+    unknown = [i for i in hit_ids if i not in EXPORT_IDS]
+    if unknown:
+        errors.append(f"export_chunks.py에 없는 chunk_id (백엔드 document_chunks와 불일치): {unknown}")
     return errors
 
 
