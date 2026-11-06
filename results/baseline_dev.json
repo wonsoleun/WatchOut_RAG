@@ -1,0 +1,740 @@
+{
+  "measured_at": "2026-11-06T19:09:09",
+  "git": {
+    "commit": "9e8381c",
+    "dirty": false
+  },
+  "config": {
+    "embedding_model": "BAAI/bge-m3",
+    "chunk_max_len": 800,
+    "chunk_overlap": 100,
+    "law_max_distance": 0.95,
+    "k": 3
+  },
+  "eval_set": {
+    "file": "eval_cases.json",
+    "sha256": "737b1507168f",
+    "split": "dev",
+    "n": 30
+  },
+  "retrieval": {
+    "n": 23,
+    "hit@3": 0.9565,
+    "recall@3": 0.9643,
+    "mrr": 0.8297
+  },
+  "pipeline": {
+    "n": 30,
+    "precision": 0.7,
+    "recall": 1.0,
+    "exact_match": 0.7,
+    "negatives": 7,
+    "false_positive_rate": 0.4286
+  },
+  "by_scenario": {
+    "abandonment": {
+      "n": 4,
+      "precision": null,
+      "recall": null,
+      "exact_match": 1.0
+    },
+    "long_stay_disturbance": {
+      "n": 3,
+      "precision": 0.5,
+      "recall": 1.0,
+      "exact_match": 0.0
+    },
+    "long_stay_only": {
+      "n": 3,
+      "precision": 0.0,
+      "recall": null,
+      "exact_match": 0.0
+    },
+    "long_stay_refuse_leave": {
+      "n": 3,
+      "precision": 0.5,
+      "recall": 1.0,
+      "exact_match": 0.0
+    },
+    "smoking": {
+      "n": 5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "exact_match": 1.0
+    },
+    "unpaid_exit_ambiguous": {
+      "n": 2,
+      "precision": 1.0,
+      "recall": 1.0,
+      "exact_match": 1.0
+    },
+    "unpaid_exit_clear": {
+      "n": 5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "exact_match": 1.0
+    },
+    "vandalism": {
+      "n": 5,
+      "precision": 1.0,
+      "recall": 1.0,
+      "exact_match": 1.0
+    }
+  },
+  "cases": [
+    {
+      "id": "unpaid_exit_clear_03",
+      "split": "dev",
+      "expect": [
+        "형법 제329조"
+      ],
+      "search_top": [
+        "형법 제329조",
+        "형법 제319조",
+        "형법 제366조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제329조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "unpaid_exit_clear_04",
+      "split": "dev",
+      "expect": [
+        "형법 제329조"
+      ],
+      "search_top": [
+        "형법 제329조",
+        "형법 제366조",
+        "국민건강증진법 제9조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제329조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "unpaid_exit_clear_06",
+      "split": "dev",
+      "expect": [
+        "형법 제329조"
+      ],
+      "search_top": [
+        "형법 제319조",
+        "형법 제329조",
+        "개인정보 보호법 제71조"
+      ],
+      "first_hit_rank": 2,
+      "returned": [
+        "형법 제329조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "unpaid_exit_clear_08",
+      "split": "dev",
+      "expect": [
+        "형법 제329조"
+      ],
+      "search_top": [
+        "형법 제329조",
+        "형법 제319조",
+        "형법 제366조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제329조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "unpaid_exit_clear_09",
+      "split": "dev",
+      "expect": [
+        "형법 제329조"
+      ],
+      "search_top": [
+        "형법 제319조",
+        "형법 제329조",
+        "개인정보 보호법 제71조"
+      ],
+      "first_hit_rank": 2,
+      "returned": [
+        "형법 제329조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "unpaid_exit_ambiguous_02",
+      "split": "dev",
+      "expect": [
+        "형법 제329조"
+      ],
+      "search_top": [
+        "형법 제329조",
+        "국민건강증진법 제9조",
+        "형법 제319조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제329조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "unpaid_exit_ambiguous_03",
+      "split": "dev",
+      "expect": [
+        "형법 제329조"
+      ],
+      "search_top": [
+        "형법 제329조",
+        "국민건강증진법 제9조",
+        "형법 제366조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제329조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "vandalism_03",
+      "split": "dev",
+      "expect": [
+        "형법 제366조"
+      ],
+      "search_top": [
+        "형법 제366조",
+        "형법 제329조",
+        "형법 제314조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제366조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "vandalism_05",
+      "split": "dev",
+      "expect": [
+        "형법 제366조"
+      ],
+      "search_top": [
+        "형법 제329조",
+        "형법 제319조",
+        "형법 제366조"
+      ],
+      "first_hit_rank": 3,
+      "returned": [
+        "형법 제366조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "vandalism_06",
+      "split": "dev",
+      "expect": [
+        "형법 제366조"
+      ],
+      "search_top": [
+        "형법 제366조",
+        "형법 제329조",
+        "형법 제314조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제366조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "vandalism_07",
+      "split": "dev",
+      "expect": [
+        "형법 제366조"
+      ],
+      "search_top": [
+        "형법 제329조",
+        "형법 제332조",
+        "형법 제314조"
+      ],
+      "first_hit_rank": 4,
+      "returned": [
+        "형법 제366조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "vandalism_08",
+      "split": "dev",
+      "expect": [
+        "형법 제366조"
+      ],
+      "search_top": [
+        "형법 제366조",
+        "형법 제329조",
+        "형법 제314조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제366조"
+      ],
+      "match": [
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "smoking_02",
+      "split": "dev",
+      "expect": [
+        "국민건강증진법 제34조",
+        "국민건강증진법 제9조"
+      ],
+      "search_top": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조",
+        "형법 제329조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "match": [
+        "rule",
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "smoking_03",
+      "split": "dev",
+      "expect": [
+        "국민건강증진법 제34조",
+        "국민건강증진법 제9조"
+      ],
+      "search_top": [
+        "국민건강증진법 제34조",
+        "국민건강증진법 제9조",
+        "형법 제332조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "match": [
+        "rule",
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "smoking_06",
+      "split": "dev",
+      "expect": [
+        "국민건강증진법 제34조",
+        "국민건강증진법 제9조"
+      ],
+      "search_top": [
+        "국민건강증진법 제34조",
+        "국민건강증진법 제9조",
+        "형법 제329조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "match": [
+        "rule",
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "smoking_07",
+      "split": "dev",
+      "expect": [
+        "국민건강증진법 제34조",
+        "국민건강증진법 제9조"
+      ],
+      "search_top": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조",
+        "형법 제329조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "match": [
+        "rule",
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "smoking_08",
+      "split": "dev",
+      "expect": [
+        "국민건강증진법 제34조",
+        "국민건강증진법 제9조"
+      ],
+      "search_top": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조",
+        "형법 제329조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "match": [
+        "rule",
+        "rule"
+      ],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "long_stay_refuse_leave_01",
+      "split": "dev",
+      "expect": [
+        "형법 제319조"
+      ],
+      "search_top": [
+        "형법 제314조",
+        "형법 제319조",
+        "국민건강증진법 제9조"
+      ],
+      "first_hit_rank": 2,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제314조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "long_stay_refuse_leave_02",
+      "split": "dev",
+      "expect": [
+        "형법 제319조"
+      ],
+      "search_top": [
+        "형법 제319조",
+        "형법 제314조",
+        "형법 제329조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제314조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "long_stay_refuse_leave_04",
+      "split": "dev",
+      "expect": [
+        "형법 제319조"
+      ],
+      "search_top": [
+        "국민건강증진법 제9조",
+        "형법 제319조",
+        "형법 제314조"
+      ],
+      "first_hit_rank": 2,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제314조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "long_stay_disturbance_01",
+      "split": "dev",
+      "expect": [
+        "형법 제314조"
+      ],
+      "search_top": [
+        "형법 제314조",
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제319조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "long_stay_disturbance_03",
+      "split": "dev",
+      "expect": [
+        "형법 제314조"
+      ],
+      "search_top": [
+        "국민건강증진법 제9조",
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "first_hit_rank": 2,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제319조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "long_stay_disturbance_05",
+      "split": "dev",
+      "expect": [
+        "형법 제314조"
+      ],
+      "search_top": [
+        "형법 제314조",
+        "국민건강증진법 제9조",
+        "형법 제329조"
+      ],
+      "first_hit_rank": 1,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제319조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "long_stay_only_03",
+      "split": "dev",
+      "expect": [],
+      "search_top": [
+        "형법 제329조",
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "first_hit_rank": null,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "long_stay_only_04",
+      "split": "dev",
+      "expect": [],
+      "search_top": [
+        "형법 제307조",
+        "형법 제332조",
+        "형법 제314조"
+      ],
+      "first_hit_rank": null,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "long_stay_only_05",
+      "split": "dev",
+      "expect": [],
+      "search_top": [
+        "형법 제314조",
+        "국민건강증진법 제9조",
+        "형법 제319조"
+      ],
+      "first_hit_rank": null,
+      "returned": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "match": [
+        "search",
+        "search"
+      ],
+      "extra": [
+        "형법 제314조",
+        "형법 제319조"
+      ],
+      "missing": []
+    },
+    {
+      "id": "abandonment_05",
+      "split": "dev",
+      "expect": [],
+      "search_top": [
+        "형법 제319조",
+        "형법 제329조",
+        "형법 제366조"
+      ],
+      "first_hit_rank": null,
+      "returned": [],
+      "match": [],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "abandonment_06",
+      "split": "dev",
+      "expect": [],
+      "search_top": [
+        "형법 제329조",
+        "형법 제366조",
+        "형법 제319조"
+      ],
+      "first_hit_rank": null,
+      "returned": [],
+      "match": [],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "abandonment_07",
+      "split": "dev",
+      "expect": [],
+      "search_top": [
+        "형법 제329조",
+        "형법 제366조",
+        "형법 제319조"
+      ],
+      "first_hit_rank": null,
+      "returned": [],
+      "match": [],
+      "extra": [],
+      "missing": []
+    },
+    {
+      "id": "abandonment_10",
+      "split": "dev",
+      "expect": [],
+      "search_top": [
+        "국민건강증진법 제9조",
+        "형법 제319조",
+        "형법 제329조"
+      ],
+      "first_hit_rank": null,
+      "returned": [],
+      "match": [],
+      "extra": [],
+      "missing": []
+    }
+  ]
+}
