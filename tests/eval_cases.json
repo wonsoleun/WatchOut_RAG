@@ -1,0 +1,707 @@
+{
+  "generator": {
+    "model": "gpt-4o-mini",
+    "seed": 42,
+    "prompt": "당신은 무인점포 CCTV 영상을 보고 사건 요약을 쓰는 영상 분석 모델입니다.\n아래 장면에 해당하는 사건 요약 문장을 서로 다르게 {n}개 만드세요.\n\n장면: {scene}\n\n규칙:\n- 영상에 보이는 행동만 쓴다. 판단, 추측, 법률 용어(예: {banned})는 쓰지 않는다.\n- 한 문장, 30~90자, 한국어 평서문 (\"~함\", \"~음\"으로 끝나는 보고서체).\n- 인물(성별·연령대·옷차림·인원), 물건, 위치, 시간대, 동작 순서를 다양하게 바꾼다.\n- 문장끼리 표현이 겹치지 않게 한다.\n\nJSON으로만 답하세요: {{\"summaries\": [\"...\", \"...\"]}}",
+    "scenarios": [
+      {
+        "scenario": "unpaid_exit_clear",
+        "event_type": "unpaid_exit",
+        "n": 10,
+        "expect": [
+          "형법 제329조"
+        ],
+        "scene": "손님이 매장 상품을 집은 뒤 키오스크에서 결제하지 않고 그대로 출입문으로 나간다. 결제하지 않은 것이 화면에서 분명히 보인다."
+      },
+      {
+        "scenario": "unpaid_exit_ambiguous",
+        "event_type": "unpaid_exit",
+        "n": 5,
+        "expect": [
+          "형법 제329조"
+        ],
+        "scene": "손님이 상품을 들고 나가는데, 키오스크 쪽이 가려지거나 동작이 빨라 결제를 했는지 확실히 보이지 않는다."
+      },
+      {
+        "scenario": "vandalism",
+        "event_type": "vandalism",
+        "n": 10,
+        "expect": [
+          "형법 제366조"
+        ],
+        "scene": "사람이 매장 안의 기물(냉장고 문, 진열대, 키오스크, 유리, 의자 등)을 발로 차거나 내리치거나 던져서 부수거나 망가뜨린다."
+      },
+      {
+        "scenario": "smoking",
+        "event_type": "smoking",
+        "n": 10,
+        "expect": [
+          "국민건강증진법 제9조",
+          "국민건강증진법 제34조"
+        ],
+        "scene": "사람이 매장 안에서 담배나 전자담배를 피운다. 연기가 보이거나 담배를 입에 무는 동작이 보인다."
+      },
+      {
+        "scenario": "long_stay_refuse_leave",
+        "event_type": "long_stay",
+        "n": 5,
+        "expect": [
+          "형법 제319조"
+        ],
+        "scene": "사람이 매장에 오래 머무르고, 점주나 관리자가 와서(또는 스피커로) 나가 달라고 요구했는데도 나가지 않고 버틴다."
+      },
+      {
+        "scenario": "long_stay_disturbance",
+        "event_type": "long_stay",
+        "n": 5,
+        "expect": [
+          "형법 제314조"
+        ],
+        "scene": "사람이 매장에 오래 머무르며 큰 소리로 소란을 피우거나 다른 손님의 이용을 막아 매장 영업이 어려워진다."
+      },
+      {
+        "scenario": "long_stay_only",
+        "event_type": "long_stay",
+        "n": 5,
+        "expect": [],
+        "scene": "사람이 매장 의자나 구석에 오래 앉아 있거나 서성이지만 소란, 파손, 결제 회피 같은 다른 행동은 없다."
+      },
+      {
+        "scenario": "abandonment",
+        "event_type": "abandonment",
+        "n": 10,
+        "expect": [],
+        "scene": "사람이 쓰레기, 봉투, 상자, 먹다 남은 음식, 개인 물건 등을 매장 안이나 입구에 두고 그냥 나간다."
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "unpaid_exit_clear_01",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "남성 고객이 매장에서 상품을 집어 들고 키오스크를 지나쳐 나감.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_clear_02",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "젊은 남성이 특정 상품을 선택한 후 결제 없이 출구로 걸어감.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_clear_03",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "중년의 남성이 진열대에서 물건을 집고 곧바로 매장을 빠져나감.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_clear_04",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "여자 아이가 장난감을 가져간 후 키오스크를 무시하고 밖으로 나옴.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_clear_05",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "노인이 음료수를 들고 결제하지 않고 출입문으로 나감.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_clear_06",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "여성 고객이 아이스크림을 집은 후 결제 단계 없이 매장을 떠남.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_clear_07",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "남자 아이가 물품을 가져간 뒤 키오스크를 지나 출구로 나감.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_clear_08",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "중학생으로 보이는 남학생이 과자를 집고 결제로 가지 않고 나감.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_clear_09",
+      "scenario": "unpaid_exit_clear",
+      "event_type": "unpaid_exit",
+      "summary": "남성 고객이 음료를 집은 후 결제 없이 바로 외부로 나감.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_ambiguous_01",
+      "scenario": "unpaid_exit_ambiguous",
+      "event_type": "unpaid_exit",
+      "summary": "젊은 남성이 상품을 들고 키오스크 앞을 지나 출입문으로 나가는데, 몸에 가려 결제 동작이 보이지 않음.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "test",
+      "reviewed": true,
+      "original_summary": "젊은 남성이 상품을 들고 키오스크 방향으로 나가려고 함.",
+      "review_note": "Claude 수정: 나간 장면이 없고 결제하러 가는 모습으로 읽힘"
+    },
+    {
+      "id": "unpaid_exit_ambiguous_02",
+      "scenario": "unpaid_exit_ambiguous",
+      "event_type": "unpaid_exit",
+      "summary": "중년 여성이 진열대 상품을 가방에 넣은 뒤 빠르게 출구로 나가며, 키오스크 쪽은 다른 손님에 가려 보이지 않음.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "dev",
+      "reviewed": true,
+      "original_summary": "중년 여성 손님이 가방을 들고 빠르게 매장을 출구로 향함.",
+      "review_note": "Claude 수정: 가방이 매장 상품인지 알 수 없었음"
+    },
+    {
+      "id": "unpaid_exit_ambiguous_03",
+      "scenario": "unpaid_exit_ambiguous",
+      "event_type": "unpaid_exit",
+      "summary": "한 아이가 장난감을 손에 들고 키오스크 쪽을 지나치며 나감.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "unpaid_exit_ambiguous_04",
+      "scenario": "unpaid_exit_ambiguous",
+      "event_type": "unpaid_exit",
+      "summary": "젊은 여성이 과자를 들고 키오스크 앞에 잠시 섰다가 나가지만, 화면 각도 때문에 결제 조작 여부가 확인되지 않음.",
+      "expect": [
+        "형법 제329조"
+      ],
+      "split": "test",
+      "reviewed": true,
+      "original_summary": "젊은 여성이 과자를 들고 출입문에 가까이 움직이는 모습이 보임.",
+      "review_note": "Claude 수정: 나간 장면이 없었음"
+    },
+    {
+      "id": "vandalism_01",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "한 남성이 매장 안에서 냉장고 문을 발로 차는 장면이 포착됨.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "vandalism_02",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "젊은 남성이 진열대를 발로 세게 차서 선반이 떨어지고 진열된 병들이 바닥에 깨짐.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "test",
+      "reviewed": true,
+      "original_summary": "젊은 남성이 진열대를 발로 차며 물건을 떨어뜨리는 모습이 관찰됨.",
+      "review_note": "Claude 수정: 파손 결과가 없었음"
+    },
+    {
+      "id": "vandalism_03",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "중년의 남성이 키오스크를 주먹으로 내리치고 있는 장면이 발견됨.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "vandalism_04",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "한 여성이 의자를 발로 차서 넘어뜨리는 모습이 기록됨.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "vandalism_05",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "노란 티셔츠를 입은 소년이 돌을 진열장을 향해 던지는 장면이 목격됨.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "vandalism_06",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "한 남성이 매장 구석에서 진열 상품 상자를 발로 여러 번 밟아 찌그러뜨리고 내용물이 터짐.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "dev",
+      "reviewed": true,
+      "original_summary": "한 남성이 매장 구석에서 물건을 발로 밟는 수상한 행동을 보임.",
+      "review_note": "Claude 수정: 파손 결과가 없었음"
+    },
+    {
+      "id": "vandalism_07",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "여성 고객이 진열대를 밀어 넘어뜨려 진열대 다리가 휘어지고 상품이 바닥에 쏟아짐.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "dev",
+      "reviewed": true,
+      "original_summary": "여성 고객이 진열대에 있는 제품을 밀어내리고 있는 모습이 나타남.",
+      "review_note": "Claude 수정: 파손 결과가 없었음"
+    },
+    {
+      "id": "vandalism_08",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "중년 남성이 매장 안 물품을 손으로 부수는 장면이 확인됨.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "vandalism_09",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "청소년들이 웃으며 키오스크 화면을 주먹으로 쳐서 화면에 금이 가고 꺼짐.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "test",
+      "reviewed": true,
+      "original_summary": "청소년들이 키오스크를 치며 시끄럽게 웃고 있는 모습이 포착됨.",
+      "review_note": "Claude 수정: 파손 결과가 없었음"
+    },
+    {
+      "id": "vandalism_10",
+      "scenario": "vandalism",
+      "event_type": "vandalism",
+      "summary": "한 남성이 냉장고 문을 세게 여러 번 닫아 문 경첩이 빠지고 문이 기울어짐.",
+      "expect": [
+        "형법 제366조"
+      ],
+      "split": "test",
+      "reviewed": true,
+      "original_summary": "한 남성이 매장 중앙에서 냉장고 문을 세게 닫아 부딪히는 장면이 목격됨.",
+      "review_note": "Claude 수정: 파손 결과가 없었음"
+    },
+    {
+      "id": "smoking_01",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "50대 남성이 매장 안에서 담배를 피우는 모습이 보임.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_02",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "20대 여성이 매장 한편에서 전자담배를 입에 물고 연기를 내뿜음.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_03",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "30대 남성이 결제를 하며 담배를 피우는 장면이 나타남.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_04",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "10대 소년이 매장 안에서 담배를 입에 물고 있는 모습이 포착됨.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_05",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "40대 여성이 전자담배를 피우며 매장 중앙에 서 있음.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_06",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "20대 남성이 담배를 피우며 친구와 대화하는 장면이 확인됨.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_07",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "10대 여성이 매장 구석에서 담배를 피우는 모습이 보임.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_08",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "50대 남성이 매장 오른쪽 구역에서 담배 연기를 내뿜음.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_09",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "40대 남성이 전자담배를 피우며 매장에서 돌아다니는 모습이 나타남.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "smoking_10",
+      "scenario": "smoking",
+      "event_type": "smoking",
+      "summary": "60대 남성이 매장에 담배 연기를 내뿜으며 들어오는 장면이 확인됨.",
+      "expect": [
+        "국민건강증진법 제9조",
+        "국민건강증진법 제34조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_refuse_leave_01",
+      "scenario": "long_stay_refuse_leave",
+      "event_type": "long_stay",
+      "summary": "중년 남성이 매장 의자에 오래 앉아 있고, 관리자가 다가와 출입문을 가리키며 손짓했으나 그대로 앉아 있음.",
+      "expect": [
+        "형법 제319조"
+      ],
+      "split": "dev",
+      "reviewed": true,
+      "original_summary": "중년 남성이 편의점에서 오랜 시간을 머무름.",
+      "review_note": "Claude 수정: 퇴거 요구가 없어 단순 체류였음"
+    },
+    {
+      "id": "long_stay_refuse_leave_02",
+      "scenario": "long_stay_refuse_leave",
+      "event_type": "long_stay",
+      "summary": "젊은 여성이 매장에 오래 머무르다 관리자가 출입문 쪽을 가리키며 나가라는 손짓을 했으나 고개를 젓고 계속 머무름.",
+      "expect": [
+        "형법 제319조"
+      ],
+      "split": "dev",
+      "reviewed": true,
+      "original_summary": "청년 여자가 매장에서 점주와의 대화 후 나가지 않음.",
+      "review_note": "Claude 수정: 대화 내용은 영상으로 알 수 없음 -> 보이는 동작으로"
+    },
+    {
+      "id": "long_stay_refuse_leave_03",
+      "scenario": "long_stay_refuse_leave",
+      "event_type": "long_stay",
+      "summary": "노인이 매장 안을 장시간 서성이고, 관리자가 두 차례 다가와 출구를 가리켰지만 매장을 떠나지 않음.",
+      "expect": [
+        "형법 제319조"
+      ],
+      "split": "test",
+      "reviewed": true,
+      "original_summary": "노인이 슈퍼마켓에서 지속적으로 구경하며 대기함.",
+      "review_note": "Claude 수정: 퇴거 요구가 없어 단순 체류였음"
+    },
+    {
+      "id": "long_stay_refuse_leave_04",
+      "scenario": "long_stay_refuse_leave",
+      "event_type": "long_stay",
+      "summary": "중년 여성이 관리자가 출입문을 열고 밖을 가리키는데도 매장 한가운데에 서서 나가지 않음.",
+      "expect": [
+        "형법 제319조"
+      ],
+      "split": "dev",
+      "reviewed": true,
+      "original_summary": "중년 여성이 의류 매장에서 관리자와의 대화 후 자리를 떠나지 않음.",
+      "review_note": "Claude 수정: 대화 내용은 영상으로 알 수 없음 -> 보이는 동작으로"
+    },
+    {
+      "id": "long_stay_refuse_leave_05",
+      "scenario": "long_stay_refuse_leave",
+      "event_type": "long_stay",
+      "summary": "청소년 두 명이 매장 테이블에 오래 앉아 있고, 관리자가 다가와 출구를 가리켰지만 자리에서 일어나지 않음.",
+      "expect": [
+        "형법 제319조"
+      ],
+      "split": "test",
+      "reviewed": true,
+      "original_summary": "청소년 두 명이 카페에서 장시간 대화하며 나가려 하지 않음.",
+      "review_note": "Claude 수정: 퇴거 요구가 없고 무인점포가 아닌 카페였음"
+    },
+    {
+      "id": "long_stay_disturbance_01",
+      "scenario": "long_stay_disturbance",
+      "event_type": "long_stay",
+      "summary": "한 남성이 매장 중앙에 서서 큰 소리로 떠들며 여러 손님을 방해함.",
+      "expect": [
+        "형법 제314조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_disturbance_02",
+      "scenario": "long_stay_disturbance",
+      "event_type": "long_stay",
+      "summary": "남학생 여러명이 매장 구석에서 소란을 피우고 있어 다른 손님들이 불편해함.",
+      "expect": [
+        "형법 제314조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_disturbance_03",
+      "scenario": "long_stay_disturbance",
+      "event_type": "long_stay",
+      "summary": "노인이 매장 출입구 근처에서 큰 목소리로 대화를 하여 영업에 지장을 줌.",
+      "expect": [
+        "형법 제314조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_disturbance_04",
+      "scenario": "long_stay_disturbance",
+      "event_type": "long_stay",
+      "summary": "중년 남성이 과도한 소란을 일으키면서 매장 뒤쪽에 머물러 손님들을 방해함.",
+      "expect": [
+        "형법 제314조"
+      ],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_disturbance_05",
+      "scenario": "long_stay_disturbance",
+      "event_type": "long_stay",
+      "summary": "여성 두 명이 매장 내에서 큰 소리를 내며 대화해 다른 손님들이 이용하기 어렵게 함.",
+      "expect": [
+        "형법 제314조"
+      ],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_only_01",
+      "scenario": "long_stay_only",
+      "event_type": "long_stay",
+      "summary": "30대 남성이 매장 구석에 앉아 있는 모습이 포착됨.",
+      "expect": [],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_only_02",
+      "scenario": "long_stay_only",
+      "event_type": "long_stay",
+      "summary": "젊은 여성 한 명이 의자에 오래 앉아 주변을 살피고 있음.",
+      "expect": [],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_only_03",
+      "scenario": "long_stay_only",
+      "event_type": "long_stay",
+      "summary": "중년 남성이 매장 한쪽에서 서성이며 시간을 보내고 있음.",
+      "expect": [],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_only_04",
+      "scenario": "long_stay_only",
+      "event_type": "long_stay",
+      "summary": "20대 초반의 남성이 의자에서 신중하게 앉아 있는 장면이 나타남.",
+      "expect": [],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "long_stay_only_05",
+      "scenario": "long_stay_only",
+      "event_type": "long_stay",
+      "summary": "남녀 두명이 매장 안쪽에서 대화를 나누며 앉아 있음.",
+      "expect": [],
+      "split": "dev",
+      "reviewed": true,
+      "review_note": "Claude 검토: 원문 그대로 사용 가능"
+    },
+    {
+      "id": "abandonment_01",
+      "scenario": "abandonment",
+      "event_type": "abandonment",
+      "summary": "남성, 30대 후반, 검은 점퍼를 입고 매장 입구에 음식 쓰레기를 두고 나감.",
+      "expect": [],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "abandonment_02",
+      "scenario": "abandonment",
+      "event_type": "abandonment",
+      "summary": "여성, 20대 후반, 빨간 가방을 매고 상자와 봉투를 매장 안에 두고 떠남.",
+      "expect": [],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "abandonment_03",
+      "scenario": "abandonment",
+      "event_type": "abandonment",
+      "summary": "남자 아이가 매장 안에 놀이기구와 개인 물건을 놓고 빠져나감.",
+      "expect": [],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "abandonment_04",
+      "scenario": "abandonment",
+      "event_type": "abandonment",
+      "summary": "한 중년 여성이 매장 입구에 먹다 남은 음식을 두고 나가는 모습이 보임.",
+      "expect": [],
+      "split": "test",
+      "reviewed": true
+    },
+    {
+      "id": "abandonment_05",
+      "scenario": "abandonment",
+      "event_type": "abandonment",
+      "summary": "20대 남자가 상자와 쓰레기를 함께 매장 입구에 두고 나감.",
+      "expect": [],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "abandonment_06",
+      "scenario": "abandonment",
+      "event_type": "abandonment",
+      "summary": "남성, 40대 초반이 개인 소지품과 음식 쓰레기를 매장 안에 놓고 나감.",
+      "expect": [],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "abandonment_07",
+      "scenario": "abandonment",
+      "event_type": "abandonment",
+      "summary": "남성, 10대 중반이 쓰레기 봉투를 매장 바닥에 두고 떠나는 모습.",
+      "expect": [],
+      "split": "dev",
+      "reviewed": true
+    },
+    {
+      "id": "abandonment_10",
+      "scenario": "abandonment",
+      "event_type": "abandonment",
+      "summary": "10대 소년이 상자와 쓰레기를 매장 입구에 두고 나가는 장면이 포착됨.",
+      "expect": [],
+      "split": "dev",
+      "reviewed": true
+    }
+  ]
+}

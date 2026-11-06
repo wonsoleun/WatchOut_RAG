@@ -134,7 +134,9 @@ def git_state() -> dict:
             return subprocess.run(["git", *args], cwd=config.ROOT, capture_output=True, text=True).stdout.strip()
         except OSError:
             return None
-    return {"commit": run("rev-parse", "--short", "HEAD"), "dirty": bool(run("status", "--porcelain"))}
+    # 추적 중인 파일의 변경만 본다 (저장할 results/ 같은 새 파일 때문에 dirty가 되지 않게)
+    return {"commit": run("rev-parse", "--short", "HEAD"),
+            "dirty": bool(run("status", "--porcelain", "--untracked-files=no"))}
 
 
 def fmt(v) -> str:

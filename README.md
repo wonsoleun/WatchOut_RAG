@@ -160,7 +160,7 @@ context = "\n\n".join(d.page_content for d in docs)
 ```powershell
 python eval_rag.py                                  # test 세트, K=3
 python eval_rag.py --split dev                      # 키워드·질의 조정은 dev로만
-python eval_rag.py --save results/baseline.json     # 설정·커밋·점수·케이스별 결과 저장
+python eval_rag.py --save results/exp_xxx.json      # 설정·커밋·점수·케이스별 결과 저장
 ```
 
 | 단계 | 지표 | 의미 |
@@ -169,7 +169,22 @@ python eval_rag.py --save results/baseline.json     # 설정·커밋·점수·�
 | 파이프라인 (`retrieve_for_segment`) | Precision, Recall, 정확 일치, 오탐률 | 백엔드가 받는 최종 조문이 맞는가. 오탐률 = 정답이 없는 장면(단순 체류, 유기)인데 조문이 나온 비율 |
 
 - `dev`는 키워드나 `EVENT_CONFIG` 질의를 고칠 때 보는 세트, `test`는 고치지 않고 점수만 보는 세트입니다. test를 보며 고치면 점수가 부풀려집니다.
-- 개선 실험은 `results/baseline.json`과 같은 평가 세트(`eval_set.sha256`)로 비교합니다.
+- 개선 실험은 `results/baseline_*.json`과 같은 평가 세트(`eval_set.sha256`)로 비교합니다.
+
+### Baseline (2026-11-06, 커밋 `9e8381c`, 평가 세트 `737b1507168f`)
+
+`bge-m3`, 청크 800/100, `LAW_MAX_DISTANCE` 0.95, K=3. 원본: `results/baseline_test.json`, `results/baseline_dev.json`
+
+| | test (26개) | dev (30개) |
+|---|---|---|
+| 검색 Hit@3 / Recall@3 | 1.000 / 1.000 | 0.957 / 0.964 |
+| 검색 MRR | 0.792 | 0.830 |
+| 파이프라인 Precision / Recall | 0.758 / 1.000 | 0.700 / 1.000 |
+| 파이프라인 정확 일치 | 0.769 | 0.700 |
+| 파이프라인 오탐률 (정답 조문 없는 장면) | 0.333 | 0.429 |
+
+- 미결제 반출·파손·흡연·유기는 정확 일치 100%. **틀린 케이스는 전부 `long_stay`**: 퇴거 거부에 제314조, 소란에 제319조, 단순 체류에 둘 다 붙음 (`EVENT_CONFIG["long_stay"]`가 두 질의를 항상 검색하기 때문).
+- 순수 벡터 검색에서는 미결제 반출에 형법 제319조가, 파손에 제329조가 1위로 오는 경우가 있어 MRR이 1보다 낮습니다. 최종 결과는 규칙 조문(`rule`)이 덮어 주므로 영향이 없지만, 키워드·임베딩을 바꿀 때 MRR로 변화를 봅니다.
 
 ## 백엔드에서 쓰기
 
@@ -212,7 +227,7 @@ python eval_rag.py --save results/baseline.json     # 설정·커밋·점수·�
 - **출력**: `legal_references`, `procedure_references`의 각 항목에 `chunk_id`를 추가했습니다 (필드 추가라 `schema_version`은 1.1 그대로).
 - **백엔드 연결**: `export_chunks.py`(document_chunks 적재용), `src/backend_adapter.py`(`search_hits`)를 추가했습니다.
 - **리포트 프롬프트**: 시간이 초 단위면 "영상 시작 기준, 실제 촬영 시각 아님"으로 표기하고, 작성 규칙에 "실제 촬영 시각을 만들어 내지 않는다"를 추가했습니다. `claims`가 문자열 목록으로 와도 처리합니다.
-- **성능 측정**: `eval_rag.py`(검색·파이프라인 두 단계, `--save`)와 Colab용 평가 질의 생성 스크립트를 추가했습니다.
+- **성능 측정**: `eval_rag.py`(검색·파이프라인 두 단계, `--save`)와 Colab용 평가 질의 생성 스크립트를 추가하고, 검수된 평가 세트 56개(`tests/eval_cases.json`)로 baseline을 측정했습니다.
 - **예시·테스트**: `examples/sample_input.json`을 상대 시간과 실제 프레임 ID 형식(`f_0012`)으로 바꿨습니다. `tests/segment_cases.json`에 `abandonment`, `dumping` 케이스를 추가했고, `test_segments.py`가 `chunk_id`와 export 파일의 일치를 검사합니다.
 
 ## ⚠️ 출력 JSON 변경 주의 (schema_version 1.0 → 1.1)
